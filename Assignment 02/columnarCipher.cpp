@@ -1,85 +1,89 @@
 #include <iostream>
 #include <string>
-#include <vector>
-#include <algorithm>
+#include <map>
 
 using namespace std;
 
-// Function to encrypt a message using the Columnar Transposition Cipher
-string encryptColumnarTranspositionCipher(const string& message, const string& key) {
-    string encryptedMessage;
-    int keyLength = key.length();
-    int messageLength = message.length();
+void setPermutationOrder(const string& key, map<char, int>& keyMap) {
+    for (int i = 0; i < key.length(); i++) {
+        keyMap[key[i]] = i;
+    }
+}
 
-    // Calculate the number of rows needed
-    int numRows = (messageLength + keyLength - 1) / keyLength;
+string encryptMessage(const string& msg, const string& key, map<char, int>& keyMap) {
+    int row, col, j;
+    string cipher = "";
+    
+    col = key.length();
+    row = msg.length() / col;
+    
+    if (msg.length() % col) {
+        row += 1;
+    }
 
-    // Create a matrix to hold the message
-    vector<vector<char>> matrix(numRows, vector<char>(keyLength, ' '));
+    char matrix[row][col];
 
-    // Fill in the matrix with the message
-    int index = 0;
-    for (int col = 0; col < keyLength; col++) {
-        for (int row = 0; row < numRows; row++) {
-            if (index < messageLength) {
-                matrix[row][col] = message[index++];
+    for (int i = 0, k = 0; i < row; i++) {
+        for (int j = 0; j < col; ) {
+            if (msg[k] == '\0') {
+                matrix[i][j] = '_';
+                j++;
+            }
+
+            if (isalpha(msg[k]) || msg[k] == ' ') {
+                matrix[i][j] = msg[k];
+                j++;
+            }
+            k++;
+        }
+    }
+
+    for (map<char, int>::iterator ii = keyMap.begin(); ii != keyMap.end(); ++ii) {
+        j = ii->second;
+        for (int i = 0; i < row; i++) {
+            if (isalpha(matrix[i][j]) || matrix[i][j] == ' ' || matrix[i][j] == '_') {
+                cipher += matrix[i][j];
             }
         }
     }
 
-    // Read the matrix in column order according to the key
-    for (char c : key) {
-        int col = key.find(c);
-        for (int row = 0; row < numRows; row++) {
-            encryptedMessage += matrix[row][col];
-        }
-    }
-
-    return encryptedMessage;
+    return cipher;
 }
 
-// Function to decrypt a message encrypted with the Columnar Transposition Cipher
-string decryptColumnarTranspositionCipher(const string& encryptedMessage, const string& key) {
-    string decryptedMessage;
-    int keyLength = key.length();
-    int messageLength = encryptedMessage.length();
+string decryptMessage(const string& cipher, const string& key, map<char, int>& keyMap) {
+    int col = key.length();
+    int row = cipher.length() / col;
+    char cipherMat[row][col];
 
-    // Calculate the number of rows needed
-    int numRows = (messageLength + keyLength - 1) / keyLength;
+    for (int j = 0, k = 0; j < col; j++) {
+        for (int i = 0; i < row; i++) {
+            cipherMat[i][j] = cipher[k++];
+        }
+    }
 
-    // Calculate the number of columns needed
-    int numCols = keyLength;
-
-    // Create a matrix to hold the message
-    vector<vector<char>> matrix(numRows, vector<char>(numCols, ' '));
-
-    // Calculate the number of characters in the last row
-    int lastRowChars = messageLength % numRows;
-
-    // Determine how many rows have one more character
-    int rowsWithExtraChar = min(lastRowChars, numRows - 1);
-
-    // Calculate the number of rows with one less character
-    int rowsWithOneLessChar = numRows - rowsWithExtraChar;
-
-    // Fill in the matrix with the encrypted message
     int index = 0;
-    for (char c : key) {
-        int col = key.find(c);
-        int numRowsForCol = (col < rowsWithExtraChar) ? numRows : rowsWithOneLessChar;
-        for (int row = 0; row < numRowsForCol; row++) {
-            matrix[row][col] = encryptedMessage[index++];
+    for (map<char, int>::iterator ii = keyMap.begin(); ii != keyMap.end(); ++ii) {
+        ii->second = index++;
+    }
+
+    char decCipher[row][col];
+
+    for (int k = 0, l, j; key[k] != '\0'; k++) {
+        l = keyMap[key[k]];
+        for (int i = 0; i < row; i++) {
+            decCipher[i][k] = cipherMat[i][l];
         }
     }
 
-    // Read the matrix in row order
-    for (int row = 0; row < numRows; row++) {
-        for (int col = 0; col < numCols; col++) {
-            decryptedMessage += matrix[row][col];
+    string msg = "";
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            if (decCipher[i][j] != '_') {
+                msg += decCipher[i][j];
+            }
         }
     }
-
-    return decryptedMessage;
+    return msg;
 }
 
 int main() {
@@ -91,11 +95,14 @@ int main() {
     cout << "Enter the encryption key: ";
     cin >> key;
 
-    string encryptedMessage = encryptColumnarTranspositionCipher(message, key);
-    string decryptedMessage = decryptColumnarTranspositionCipher(encryptedMessage, key);
+    map<char, int> keyMap;
+    setPermutationOrder(key, keyMap);
 
-    cout << "Encrypted message: " << encryptedMessage << endl;
-    cout << "Decrypted message: " << decryptedMessage << endl;
+    string encryptedMessage = encryptMessage(message, key, keyMap);
+    string decryptedMessage = decryptMessage(encryptedMessage, key, keyMap);
+
+    cout << "Encrypted Message: " << encryptedMessage << endl;
+    cout << "Decrypted Message: " << decryptedMessage << endl;
 
     return 0;
 }

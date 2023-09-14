@@ -1,75 +1,65 @@
-// C++ code to implement Vigenere Cipher
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
 
-// This function generates the key in
-// a cyclic manner until it's length isn't
-// equal to the length of original text
-string generateKey(string str, string key)
-{
-	int x = str.size();
-
-	for (int i = 0; ; i++)
-	{
-		if (x == i)
-			i = 0;
-		if (key.size() == str.size())
-			break;
-		key.push_back(key[i]);
-	}
-	return key;
+string format(string &str) {
+    stringstream res;
+    for (auto &ch : str) {
+        if (ch != ' ') {
+            res << (char)tolower(ch);
+        }
+    }
+    return res.str();
 }
 
-// This function returns the encrypted text
-// generated with the help of the key
-string cipherText(string str, string key)
-{
-	string cipher_text;
-
-	for (int i = 0; i < str.size(); i++)
-	{
-		// converting in range 0-25
-		char x = (str[i] + key[i]) %26;
-
-		// convert into alphabets(ASCII)
-		x += 'A';
-
-		cipher_text.push_back(x);
-	}
-	return cipher_text;
+string encrypt(string &plain, string &key) {
+    stringstream cipher;
+    for (int i = 0; i < plain.size(); i++) {
+        int val = plain[i] - 'a' + key[i % (key.size())] - 'a';
+        cipher << (char)('a' + (val % 26));
+    }
+    return cipher.str();
 }
 
-// This function decrypts the encrypted text
-// and returns the original text
-string originalText(string cipher_text, string key)
-{
-	string orig_text;
-
-	for (int i = 0 ; i < cipher_text.size(); i++)
-	{
-		// converting in range 0-25
-		char x = (cipher_text[i] - key[i] + 26) %26;
-
-		// convert into alphabets(ASCII)
-		x += 'A';
-		orig_text.push_back(x);
-	}
-	return orig_text;
+string decrypt(string &cipher, string &key) {
+    stringstream plain;
+    for (int i = 0; i < cipher.size(); i++) {
+        int val = cipher[i] - 'a' - (key[i % (key.size())] - 'a');
+        plain << (char)('a' + (val + 26) % 26);
+    }
+    return plain.str();
 }
 
-// Driver program to test the above function
-int main()
-{
-	string str = "Rohan";
-	string keyword = "Chava";
+int main() {
+    int choice;
+    cout << "1. Encrypt\n2. Decrypt\nEnter your choice: ";
+    cin >> choice;
+    cin.get();
 
-	string key = generateKey(str, keyword);
-	string cipher_text = cipherText(str, key);
+    if (choice == 1) {
+        string plain, key;
+        cout << "\nEnter plain text: ";
+        getline(cin, plain);
+        plain = format(plain);
 
-	cout << "Ciphertext : "
-		<< cipher_text << "\n";
+        cout << "\nEnter key: ";
+        getline(cin, key);
 
-	cout << "Original/Decrypted Text : "
-		<< originalText(cipher_text, key);
-	return 0;
+        string cipher = encrypt(plain, key);
+
+        cout << "\nEncrypted text is : " << cipher << endl;
+    } else if (choice == 2) {
+        string cipher, key;
+        cout << "\nEnter cipher text: ";
+        getline(cin, cipher);
+        cipher = format(cipher);
+
+        cout << "\nEnter key: ";
+        getline(cin, key);
+
+        string plain = decrypt(cipher, key);
+
+        cout << "\nDecrypted text is : " << plain << endl;
+    }
+
+    return 0;
 }

@@ -1,103 +1,120 @@
-#include <iostream>
-#include <string>
-
+// C++ program to illustrate Rail Fence Cipher
+// Encryption and Decryption
+#include <bits/stdc++.h>
 using namespace std;
 
-// Function to encrypt a message using the Rail Fence Cipher
-string encryptRailFenceCipher(const string& message, int rails) {
-    string encryptedMessage;
-    string railMatrix[rails];
-    
-    int row = 0;
-    bool down = true;
+// function to encrypt a message
+string encryptRailFence(string text, int key)
+{
+	// create the matrix to cipher plain text
+	// key = rows , length(text) = columns
+	char rail[key][(text.length())];
 
-    for (char c : message) {
-        railMatrix[row] += c;
-        
-        if (row == 0) {
-            down = true;
-        } else if (row == rails - 1) {
-            down = false;
-        }
+	// filling the rail matrix to distinguish filled
+	// spaces from blank ones
+	for (int i=0; i < key; i++)
+		for (int j = 0; j < text.length(); j++)
+			rail[i][j] = '\n';
 
-        if (down) {
-            row++;
-        } else {
-            row--;
-        }
-    }
+	// to find the direction
+	bool dir_down = false;
+	int row = 0, col = 0;
 
-    for (int i = 0; i < rails; i++) {
-        encryptedMessage += railMatrix[i];
-    }
+	for (int i=0; i < text.length(); i++)
+	{
+		// check the direction of flow
+		// reverse the direction if we've just
+		// filled the top or bottom rail
+		if (row == 0 || row == key-1)
+			dir_down = !dir_down;
 
-    return encryptedMessage;
+		// fill the corresponding alphabet
+		rail[row][col++] = text[i];
+
+		// find the next row using direction flag
+		dir_down?row++ : row--;
+	}
+
+	//now we can construct the cipher using the rail matrix
+	string result;
+	for (int i=0; i < key; i++)
+		for (int j=0; j < text.length(); j++)
+			if (rail[i][j]!='\n')
+				result.push_back(rail[i][j]);
+
+	return result;
 }
 
-// Function to decrypt a message encrypted with the Rail Fence Cipher
-string decryptRailFenceCipher(const string& encryptedMessage, int rails) {
-    string decryptedMessage;
-    string railMatrix[rails];
-    
-    int messageLength = encryptedMessage.length();
-    int railLengths[rails];
-    
-    int row = 0;
-    bool down = true;
+// This function receives cipher-text and key
+// and returns the original text after decryption
+string decryptRailFence(string cipher, int key)
+{
+	// create the matrix to cipher plain text
+	// key = rows , length(text) = columns
+	char rail[key][cipher.length()];
 
-    // Calculate the length of each rail
-    for (int i = 0; i < rails; i++) {
-        railLengths[i] = 0;
-    }
+	// filling the rail matrix to distinguish filled
+	// spaces from blank ones
+	for (int i=0; i < key; i++)
+		for (int j=0; j < cipher.length(); j++)
+			rail[i][j] = '\n';
 
-    for (int i = 0; i < messageLength; i++) {
-        railLengths[row]++;
-        
-        if (row == 0) {
-            down = true;
-        } else if (row == rails - 1) {
-            down = false;
-        }
+	// to find the direction
+	bool dir_down;
 
-        if (down) {
-            row++;
-        } else {
-            row--;
-        }
-    }
+	int row = 0, col = 0;
 
-    // Fill in the rail matrix with the encrypted message
-    row = 0;
-    int index = 0;
+	// mark the places with '*'
+	for (int i=0; i < cipher.length(); i++)
+	{
+		// check the direction of flow
+		if (row == 0)
+			dir_down = true;
+		if (row == key-1)
+			dir_down = false;
 
-    for (int i = 0; i < messageLength; i++) {
-        railMatrix[row] += encryptedMessage[index++];
-        
-        if (row == 0) {
-            down = true;
-        } else if (row == rails - 1) {
-            down = false;
-        }
+		// place the marker
+		rail[row][col++] = '*';
 
-        if (down) {
-            row++;
-        } else {
-            row--;
-        }
-    }
+		// find the next row using direction flag
+		dir_down?row++ : row--;
+	}
 
-    // Decrypt the message
-    row = 0;
-    for (int i = 0; i < rails; i++) {
-        decryptedMessage += railMatrix[i].substr(0, railLengths[i]);
-        railMatrix[i].erase(0, railLengths[i]);
-    }
+	// now we can construct the fill the rail matrix
+	int index = 0;
+	for (int i=0; i<key; i++)
+		for (int j=0; j<cipher.length(); j++)
+			if (rail[i][j] == '*' && index<cipher.length())
+				rail[i][j] = cipher[index++];
 
-    return decryptedMessage;
+
+	// now read the matrix in zig-zag manner to construct
+	// the resultant text
+	string result;
+
+	row = 0, col = 0;
+	for (int i=0; i< cipher.length(); i++)
+	{
+		// check the direction of flow
+		if (row == 0)
+			dir_down = true;
+		if (row == key-1)
+			dir_down = false;
+
+		// place the marker
+		if (rail[row][col] != '*')
+			result.push_back(rail[row][col++]);
+
+		// find the next row using direction flag
+		dir_down?row++: row--;
+	}
+	return result;
 }
 
-int main() {
-    string message;
+//driver program to check the above functions
+int main()
+{
+	string message;
     int rails;
 
     cout << "Enter a message: ";
@@ -106,11 +123,11 @@ int main() {
     cout << "Enter the number of rails: ";
     cin >> rails;
 
-    string encryptedMessage = encryptRailFenceCipher(message, rails);
-    string decryptedMessage = decryptRailFenceCipher(encryptedMessage, rails);
+    string encryptedMessage = encryptRailFence(message, rails);
+    string decryptedMessage = decryptRailFence(encryptedMessage, rails);
 
     cout << "Encrypted message: " << encryptedMessage << endl;
     cout << "Decrypted message: " << decryptedMessage << endl;
 
-    return 0;
+	return 0;
 }
