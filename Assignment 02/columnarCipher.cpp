@@ -1,108 +1,88 @@
-#include <iostream>
-#include <string>
-#include <map>
-
+#include <bits/stdc++.h>
 using namespace std;
 
-void setPermutationOrder(const string& key, map<char, int>& keyMap) {
-    for (int i = 0; i < key.length(); i++) {
-        keyMap[key[i]] = i;
+string format(string &str) {
+    stringstream res;
+    for (auto ch : str) {
+        if (ch != ' ') {
+            res << (char)tolower(ch);
+        }
     }
+    return res.str();
 }
 
-string encryptMessage(const string& msg, const string& key, map<char, int>& keyMap) {
-    int row, col, j;
-    string cipher = "";
-    
-    col = key.length();
-    row = msg.length() / col;
-    
-    if (msg.length() % col) {
-        row += 1;
+string encrypt(string &plain, string &key) {
+    vector<vector<char>> matrix(key.size());
+
+    int rowNumber = 0;
+    int flag = 1;
+    for (int i = 0; i < plain.size(); i++) {
+        matrix[rowNumber].push_back(plain[i]);
+        rowNumber += flag;
+        if (rowNumber == 0)
+            flag = 1;
+
+        if (rowNumber == key.size() - 1)
+            flag = -1;
     }
 
-    char matrix[row][col];
-
-    for (int i = 0, k = 0; i < row; i++) {
-        for (int j = 0; j < col; ) {
-            if (msg[k] == '\0') {
-                matrix[i][j] = '_';
-                j++;
-            }
-
-            if (isalpha(msg[k]) || msg[k] == ' ') {
-                matrix[i][j] = msg[k];
-                j++;
-            }
-            k++;
-        }
+    stringstream cipher;
+    for (int i = 0; i < key.size(); i++) {
+        for (int j = 0; j < matrix[i].size(); j++)
+            cipher << char(matrix[i][j]);
     }
-
-    for (map<char, int>::iterator ii = keyMap.begin(); ii != keyMap.end(); ++ii) {
-        j = ii->second;
-        for (int i = 0; i < row; i++) {
-            if (isalpha(matrix[i][j]) || matrix[i][j] == ' ' || matrix[i][j] == '_') {
-                cipher += matrix[i][j];
-            }
-        }
-    }
-
-    return cipher;
+    return cipher.str();
 }
 
-string decryptMessage(const string& cipher, const string& key, map<char, int>& keyMap) {
-    int col = key.length();
-    int row = cipher.length() / col;
-    char cipherMat[row][col];
+string decrypt(string &cipher, string &key) {
+    vector<vector<int>> matrixDecry(key.size());
+    int rowNumber = 0;
+    int flag = 1;
 
-    for (int j = 0, k = 0; j < col; j++) {
-        for (int i = 0; i < row; i++) {
-            cipherMat[i][j] = cipher[k++];
-        }
+    int n = cipher.length();
+
+    for (int i = 0; i < n; i++) {
+        matrixDecry[rowNumber].push_back(i);
+        rowNumber += flag;
+        if (rowNumber == (key.size() - 1))
+            flag = -1;
+        if (rowNumber == 0)
+            flag = 1;
     }
 
-    int index = 0;
-    for (map<char, int>::iterator ii = keyMap.begin(); ii != keyMap.end(); ++ii) {
-        ii->second = index++;
+    vector<int> mapping;
+    for (int i = 0; i < key.size(); i++) {
+        for (int j = 0; j < matrixDecry[i].size(); j++)
+            mapping.push_back(matrixDecry[i][j]);
     }
 
-    char decCipher[row][col];
+    map<int, char> m;
+    for (int i = 0; i < n; i++)
+        m[mapping[i]] = cipher[i];
 
-    for (int k = 0, l, j; key[k] != '\0'; k++) {
-        l = keyMap[key[k]];
-        for (int i = 0; i < row; i++) {
-            decCipher[i][k] = cipherMat[i][l];
-        }
-    }
+    stringstream plain;
+    for (int i = 0; i < n; i++)
+        plain << char(m[i]);
 
-    string msg = "";
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < col; j++) {
-            if (decCipher[i][j] != '_') {
-                msg += decCipher[i][j];
-            }
-        }
-    }
-    return msg;
+    return plain.str();
 }
 
 int main() {
-    string message, key;
+    string input, key;
+    
+    cout << "Enter text to encrypt: ";
+    getline(cin, input);
+    input = format(input);
 
-    cout << "Enter a message: ";
-    getline(cin, message);
+    cout << "Enter key (string): ";
+    getline(cin, key);
+    key = format(key);
 
-    cout << "Enter the encryption key: ";
-    cin >> key;
+    string cipher = encrypt(input, key);
+    cout << "Encrypted text: " << cipher << endl;
 
-    map<char, int> keyMap;
-    setPermutationOrder(key, keyMap);
-
-    string encryptedMessage = encryptMessage(message, key, keyMap);
-    string decryptedMessage = decryptMessage(encryptedMessage, key, keyMap);
-
-    cout << "Encrypted Message: " << encryptedMessage << endl;
-    cout << "Decrypted Message: " << decryptedMessage << endl;
+    string decrypted = decrypt(cipher, key);
+    cout << "Decrypted text: " << decrypted << endl;
 
     return 0;
 }
